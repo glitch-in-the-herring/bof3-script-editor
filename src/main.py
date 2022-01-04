@@ -21,6 +21,7 @@ def main():
     source = open(args.source, "r")
     output = open(args.output, "wb")
 
+    source_str = source.read()
 
     source.close()
     output.close()
