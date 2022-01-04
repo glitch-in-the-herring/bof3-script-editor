@@ -33,7 +33,6 @@ def parse(source_str):
 
     state = 0
     offset = 0
-    length = 0
     command = ""
     pointer_tbl = []
     char_tbl = []
@@ -48,18 +47,17 @@ def parse(source_str):
                 continue
             elif i == "|":
                 char_tbl.append(0x02)
-                length += 1
+                state = 3
                 offset += 1
             elif i == "\\":
                 char_tbl.append(0x00)
-                length += 1
+                state = 3
                 offset += 1
             else:
                 if i in conv_table.keys():
                     char_tbl.append(conv_table[i])
                 else:
                     char_tbl.append(ord(i))
-                length += 1
                 offset += 1
         elif state == 1:
             if i == "=":
@@ -78,7 +76,7 @@ def parse(source_str):
                             if command[1] in box_pos_table.keys():
                                 box_byte += box_pos_table[command[1]]
                         except IndexError:
-                            state = 3                            
+                            state = 3
                             continue
                         try:
                             if command[2] in box_size_table.keys():
@@ -96,26 +94,27 @@ def parse(source_str):
             if i == "\n":
                 state = 0
                 continue
+            elif i == " ":
+                continue
             elif i == "=":
                 state = 1
                 continue
-            elif i == "[":              
+            elif i == "[":
                 state = 2
                 continue
             elif i == "|":
                 char_tbl.append(0x02)
-                length += 1
                 offset += 1
+                continue
             elif i == "\\":
                 char_tbl.append(0x00)
-                length += 1
-                offset += 1                
+                offset += 1
+                continue
             else:
                 if i in conv_table.keys():
                     char_tbl.append(conv_table[i])
                 else:
                     char_tbl.append(ord(i))
-                length += 1
                 offset += 1
             state = 0
 
