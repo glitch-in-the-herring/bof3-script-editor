@@ -1,4 +1,8 @@
 def parse(source_str):
+    variables = {
+        "PTSIZE" : 512
+    }
+
     conv_table = {
         "\n" : 0x01,
         "(" : 0x3a,
@@ -49,6 +53,8 @@ def parse(source_str):
     state = 0
     offset = 0
     command = ""
+    variable = ""
+    value = 0
     command_stack = []
     pointer_tbl = []
     char_tbl = []
@@ -59,11 +65,14 @@ def parse(source_str):
     # 0x00 = not seeking anything actively
     # 0x01 = looking for second "=" in "=="
     # 0x02 = looking for "..]" in "[..]"
-    # 0x04 = newline leniency
+    # 0x04 = looking for ".." in "$..=...;"
+    # 0x08 = looking for "..." in "$..=...;"
+    # 0x03 = newline leniency
     #
     # upper nibble:
     # 0x00 = not looking for end tag
     # 0x01 = looking for end tag
+    # 0x02 = comment
 
     for i in source_str:
         if state & 0x0f == 0:
@@ -74,13 +83,18 @@ def parse(source_str):
                 state = state & 0xf0 | 2
                 command = ""
                 continue
+            elif i == "$":
+                state = state & 0xf0 | 4
+                variable = ""
+                value = ""
+                continue
             elif i == "|":
                 char_tbl.append(0x02)
-                state = state & 0xf0 | 4
+                state = state & 0xf0 | 3
                 offset += 1
             elif i == "\\":
                 char_tbl.append(0x00)
-                state = state & 0xf0 | 4
+                state = state & 0xf0 | 3
                 offset += 1
             else:
                 if i in conv_table.keys():
@@ -91,11 +105,11 @@ def parse(source_str):
         elif state & 0x0f == 1:
             if i == "=":
                 pointer_tbl.append(offset)
-            state = state & 0xf0 | 4
+            state = state & 0xf0 | 3
         elif state & 0x0f == 2:
             if i == "]":
                 if command == "":
-                    state = state & 0xf0 | 4
+                    state = state & 0xf0 | 3
                     continue
                 else:
                     command_tokens = command.split()
@@ -105,7 +119,7 @@ def parse(source_str):
                             if command_tokens[1] in box_pos_table.keys():
                                 box_byte += box_pos_table[command_tokens[1]]
                         except IndexError:
-                            state = state & 0xf0 | 4
+                            state = state & 0xf0 | 3
                             continue
                         try:
                             if command_tokens[2] in box_size_table.keys():
@@ -115,31 +129,54 @@ def parse(source_str):
                         char_tbl.append(0x0c)
                         char_tbl.append(box_byte)
                         offset += 2
-                        state = state & 0xf0 | 4
+                        state = state & 0xf0 | 3
                     elif command_tokens[0] == "COLOR":
                         color_byte = 0
                         try:
                             if command_tokens[1] in color_table.keys():
                                 color_byte += color_table[command_tokens[1]]
                         except IndexError:
-                            state = state & 0xf0 | 4
+                            state = state & 0xf0 | 3
                             continue
                         char_tbl.append(0x05)
                         char_tbl.append(color_byte)
                         offset += 2
-                        state = 0x14
+                        state = 0x13
                         command_stack.append("/COLOR")
                     elif command_tokens[0] == "/COLOR" and state & 0xf0 == 0x10:
                         if command_tokens[0] == command_stack[-1]:
                             char_tbl.extend(close_table[command_stack[-1]])
                             offset += len(close_table[command_stack.pop()])
                         if len(command_stack) == 0:
-                            state = 0x04
+                            state = 0x03
                             continue
-                        state = state & 0xf0 | 4
+                        state = state & 0xf0 | 3
             else:
-                command = "".join([command, i])
+                command = "".join((command, i))
         elif state & 0x0f == 4:
+            if i == "=":
+                state = state & 0xf0 | 8
+                continue
+            else:
+                if i == "\n":
+                    state = state & 0xf0 | 3
+                    continue
+                elif i == " ":
+                    continue
+                variable = "".join((variable, i))
+        elif state & 0x0f == 8:
+            if i == ";":
+                try:
+                    value = int(value)
+                except ValueError:
+                    pass
+                variables[variable] = value
+                state = state & 0xf0 | 3
+            else:
+                if i == "\n" or i == " ":
+                    continue
+                value = "".join((value, i))
+        elif state & 0x0f == 3:
             if i == "\n":
                 state = state & 0xf0 | 0
                 continue
@@ -168,4 +205,5 @@ def parse(source_str):
                 offset += 1
             state = state & 0xf0 | 0
 
+    print(variables)
     return (pointer_tbl, char_tbl)

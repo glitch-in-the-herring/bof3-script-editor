@@ -1,6 +1,6 @@
 from parse import parse
 
-a = "==[COLOR PURPLE][COLOR RED]test[/COLOR][/COLOR]\\==test"
+a = "$PTSIZE = 1300;\nThis should appear as bytes"
 x = parse(a)
 n = 0
 
