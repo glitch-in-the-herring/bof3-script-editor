@@ -13,9 +13,11 @@ def parse(source_str):
         "/" : 0x3f,
         "?" : 0x5c,
         "!" : 0x5d,
+        "+" : 0x8b,
         "\'" : 0x8e,
         ":" : 0x8f,
         "\"" : 0x90,
+        "%" : 0x93,
         " " : 0xff
     }
 
@@ -45,6 +47,18 @@ def parse(source_str):
         "BLACK" : 0x07
     }
 
+    effects_table = [
+        "SHK_S", "SHK_L", "SHK_P",
+        "BIG0_S", "BIG1_S", "BIG2_S",
+        "BIG0_L", "BIG1_L", "BIG2_L",
+        "BIG0_P", "BIG1_P", "BIG2_P",
+        "SML0_S", "SML1_S", "SML2_S",
+        "SML0_L", "SML1_L", "SML2_L",
+        "SML0_P", "SML1_P", "SML2_P",
+        "WAV_L", "WAV_H",
+        "JMP0", "JMP1", "JMP2" 
+    ]
+
     close_table = {
         "/COLOR" : (0x06,),
         "/EFFECT" : (0x0e, 0x0f)
@@ -72,7 +86,6 @@ def parse(source_str):
     # upper nibble:
     # 0x00 = not looking for end tag
     # 0x01 = looking for end tag
-    # 0x02 = comment
 
     for i in source_str:
         if state & 0x0f == 0:
@@ -88,6 +101,10 @@ def parse(source_str):
                 variable = ""
                 value = ""
                 continue
+            elif i == "#":
+                char_tbl.append(0x0b)
+                state = state & 0xf0 | 3
+                offset += 1
             elif i == "|":
                 char_tbl.append(0x02)
                 state = state & 0xf0 | 3

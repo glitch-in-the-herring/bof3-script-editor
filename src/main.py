@@ -9,6 +9,9 @@ argparser.add_argument(
 argparser.add_argument(
     "-o", "--output", metavar="TARGET", type=str, help="File to write"
 )
+argparser.add_argument(
+    "-v", "--verbose", action="store_true", default=False
+)
 args = argparser.parse_args()
 curr_offset = 0
 offsets = []
