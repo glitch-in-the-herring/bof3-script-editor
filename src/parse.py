@@ -144,6 +144,14 @@ def parse(source_str):
                         char_tbl.append(box_byte)
                         offset += 2
                         state = state & 0xf0 | 3
+                    elif command_tokens[0] == "TIME":
+                        time_byte = 0
+                        try:
+                            time_byte = int(command_tokens[1], base=16)
+                        except ValueError:
+                            pass
+                        char_tbl.append(0x16)
+                        char_tbl.append(time_byte)
                     elif command_tokens[0] == "COLOR":
                         color_byte = 0
                         try:
@@ -176,6 +184,7 @@ def parse(source_str):
                                 char_tbl.append(effects_table.index(command_tokens[1]))
                                 command_stack.pop()
                             except IndexError:
+                                state = state & 0xf0 | 3
                                 continue
                         if len(command_stack) == 0:
                             state = 0x03
