@@ -54,7 +54,7 @@ bool is_math_tbl(byte toc_header[])
 
 bool is_dialogue_section(byte toc_entry[])
 {
-    return toc_entry[4] == 0x00 && toc_entry[5] == 0x00 && toc_entry[6] == 0x01 && toc_entry[7] == 0x80;
+    return toc_entry[6] == 0x01 && toc_entry[7] == 0x80;
 }
 
 bool is_alphanum(byte a)

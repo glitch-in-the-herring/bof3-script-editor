@@ -109,7 +109,7 @@ int main(int argc, char *argv[])
             }
             else if (dialogue_section[j] == 0x0b)
             {
-                fprintf(output_file, "<>");
+                fprintf(output_file, "#");
             }
             else if (dialogue_section[j] == 0x02)
             {
@@ -188,7 +188,7 @@ int main(int argc, char *argv[])
             }
             else if (dialogue_section[j] == 0x00 && opt_counter > 0)
             {
-                fprintf(output_file, "\n");
+                fprintf(output_file, "\\\n");
                 opt_counter--;
             }
 
