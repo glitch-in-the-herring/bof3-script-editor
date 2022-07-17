@@ -1,10 +1,16 @@
-from parse import parse
+from parse import parse, process_tbl
 
-a = "$PTSIZE = 1300;\nThis should appear as bytes"
+a = """==This should appear as bytes
+this too...\\
+==what about this one?\\
+"""
 x = parse(a)
 n = 0
 
-for i in x[1]:
+print("\nPointer tbl")
+a = process_tbl(x)
+n = 0
+for i in a:
     print("{:02x}".format(i), end="")
     if n % 8 == 7:
         print("")
