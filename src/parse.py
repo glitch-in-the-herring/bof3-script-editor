@@ -1,3 +1,6 @@
+import collections
+import tools
+
 def parse(source_str):
     variables = {
         "PTSIZE" : 512
@@ -79,9 +82,9 @@ def parse(source_str):
     # 0x00 = not seeking anything actively
     # 0x01 = looking for second "=" in "=="
     # 0x02 = looking for "..]" in "[..]"
+    # 0x03 = newline leniency
     # 0x04 = looking for ".." in "$..=...;"
     # 0x08 = looking for "..." in "$..=...;"
-    # 0x03 = newline leniency
     #
     # upper nibble:
     # 0x00 = not looking for end tag
@@ -98,15 +101,15 @@ def parse(source_str):
                 state = state & 0xf0 | 4
                 variable = ""
                 value = ""
-            elif i == "#":
+            elif i == "#": # pause
                 char_tbl.append(0x0b)
                 state = state & 0xf0 | 3
                 offset += 1
-            elif i == "|":
+            elif i == "|": # continue to next
                 char_tbl.append(0x02)
                 state = state & 0xf0 | 3
                 offset += 1
-            elif i == "\\":
+            elif i == "\\": # end
                 char_tbl.append(0x00)
                 state = state & 0xf0 | 3
                 offset += 1
@@ -237,5 +240,25 @@ def parse(source_str):
                 offset += 1
             state = state & 0xf0 | 0
 
-    print(variables)
-    return (pointer_tbl, char_tbl)
+    variables["OFFSET"] = offset
+    return (pointer_tbl, char_tbl, variables)
+    
+def process_tbl(parsed):
+    ptsize = parsed[2]["PTSIZE"]
+    offset = parsed[2]["OFFSET"]
+    offset_little = tools.to_little(offset + ptsize, 2)
+    tbl = []
+    if ptsize & 1 != 0:
+        raise ValueError
+    tbl.extend(tools.to_little(ptsize, 2))
+    j = 0
+    for i in parsed[0]:
+        j += 1
+        tbl.extend(tools.to_little(i + ptsize, 2))
+
+    for i in range((ptsize - j*2 - 2)//2):
+        tbl.append(offset_little)
+
+    tbl.extend(parsed[1])
+    padding = offset // 2048
+    return tbl
