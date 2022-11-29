@@ -125,36 +125,30 @@ int main(int argc, char *argv[])
                 switch (dialogue_section[j + 1])
                 {
                     case 0x00:
-                        fprintf(output_file, "Ryu");
-                        j++;                    
+                        fprintf(output_file, "[PARTY RYU]");
                         break;
                     case 0x01:
-                        fprintf(output_file, "Nina");
-                        j++;                    
+                        fprintf(output_file, "[PARTY NINA]");
                         break;
                     case 0x02:
-                        fprintf(output_file, "Garr");
-                        j++;                    
+                        fprintf(output_file, "[PARTY GARR]");
                         break;
                     case 0x03:
-                        fprintf(output_file, "Teepo");
-                        j++;                    
+                        fprintf(output_file, "[PARTY TEEPO]");
                         break;
                     case 0x04:
-                        fprintf(output_file, "Rei");
-                        j++;                    
+                        fprintf(output_file, "[PARTY REI]");
                         break;
                     case 0x05:
-                        fprintf(output_file, "Momo");
-                        j++;                    
+                        fprintf(output_file, "[PARTY MOMO]");
                         break;
                     case 0x06:
-                        fprintf(output_file, "Peco");
-                        j++;                    
+                        fprintf(output_file, "[PARTY PECO]");
                         break;
                     default:
                         break;
                 }
+                j++;
             }
             else if (dialogue_section[j] == 0x05)
             {

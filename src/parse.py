@@ -50,6 +50,16 @@ def parse(source_str):
         "BLACK" : 0x07
     }
 
+    party_tbl = {
+        "RYU" : 0x00,
+        "NINA" : 0x01,
+        "GARR" : 0x02,
+        "TEEPO" : 0x03,
+        "REI" : 0x04,
+        "MOMO" : 0x05,
+        "PECO" : 0x06
+    }
+
     effects_table = [
         "SHK_S", "SHK_L", "SHK_P",
         "BIG0_S", "BIG1_S", "BIG2_S",
@@ -185,13 +195,27 @@ def parse(source_str):
                             try:
                                 char_tbl.extend((0x0e, 0x0f))
                                 char_tbl.append(effects_table.index(command_tokens[1]))
+                                offset += 3
                                 command_stack.pop()
                             except IndexError:
                                 state = state & 0xf0 | 3
                                 continue
                         if len(command_stack) == 0:
                             state = 0x03
-                            continue                                
+                            continue
+                    elif command_tokens[0] == "PARTY":
+                        party_byte = 0
+                        char_tbl.append(0x04)
+                        try:
+                            if command_tokens[1] in party_tbl.keys():
+                                party_byte += box_pos_table[command_tokens[1]]
+                        except IndexError:
+                            state = state & 0xf0 | 3
+                            continue
+                        char_tbl.append(0x04)
+                        char.tbl.append(party_byte)
+                        offset += 2
+                        state = state & 0xf0 | 3
             else:
                 command = "".join((command, i))
         elif state & 0x0f == 4:
