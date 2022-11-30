@@ -1,63 +1,63 @@
-import collections
 import tools
 
 def parse(source_str):
     variables = {
-        "PTSIZE" : 512
+        "PTSIZE" : 512,
+        "REGION" : 0
     }
 
     conv_table = {
-        "\n" : 0x01,
-        "(" : 0x3a,
-        ")" : 0x3b,
-        "," : 0x3c,
-        "-" : 0x3d,
-        "." : 0x3e,
-        "/" : 0x3f,
-        "?" : 0x5c,
-        "!" : 0x5d,
-        "+" : 0x8b,
-        "\'" : 0x8e,
-        ":" : 0x8f,
-        "\"" : 0x90,
-        "%" : 0x93,
-        " " : 0xff
+        "\n" : b"\x01",
+        "(" : b"\x3a",
+        ")" : b"\x3b",
+        "," : b"\x3c",
+        "-" : b"\x3d",
+        "." : b"\x3e",
+        "/" : b"\x3f",
+        "?" : b"\x5c",
+        "!" : b"\x5d",
+        "+" : b"\x8b",
+        "\'" : b"\x8e",
+        ":" : b"\x8f",
+        "\"" : b"\x90",
+        "%" : b"\x93",
+        " " : b"\xff"
     }
 
     box_pos_table = {
-        "BM" : 0x00,
-        "MM" : 0x01,
-        "TM" : 0x02,
-        "TL" : 0x03,
-        "TR" : 0x04,
-        "BL" : 0x05,
-        "BR" : 0x06
+        "BM" : b"\x00",
+        "MM" : b"\x01",
+        "TM" : b"\x02",
+        "TL" : b"\x03",
+        "TR" : b"\x04",
+        "BL" : b"\x05",
+        "BR" : b"\x06"
     }
 
     box_size_table = {
-        "NV" : 0x00,
-        "SV" : 0x40,
-        "NI" : 0x80
+        "NV" : b"\x00",
+        "SV" : b"\x40",
+        "NI" : b"\x80"
     }
 
     color_table = {
-        "PURPLE" : 0x01,
-        "RED" : 0x02,
-        "CYAN" : 0x03,
-        "YELLOW" : 0x04,
-        "PINK" : 0x05,
-        "GREEN" : 0x06,
-        "BLACK" : 0x07
+        "PURPLE" : b"\x01",
+        "RED" : b"\x02",
+        "CYAN" : b"\x03",
+        "YELLOW" : b"\x04",
+        "PINK" : b"\x05",
+        "GREEN" : b"\x06",
+        "BLACK" : b"\x07"
     }
 
     party_tbl = {
-        "RYU" : 0x00,
-        "NINA" : 0x01,
-        "GARR" : 0x02,
-        "TEEPO" : 0x03,
-        "REI" : 0x04,
-        "MOMO" : 0x05,
-        "PECO" : 0x06
+        "RYU" : b"\x00",
+        "NINA" : b"\x01",
+        "GARR" : b"\x02",
+        "TEEPO" : b"\x03",
+        "REI" : b"\x04",
+        "MOMO" : b"\x05",
+        "PECO" : b"\x06"
     }
 
     effects_table = [
@@ -73,8 +73,8 @@ def parse(source_str):
     ]
 
     close_table = {
-        "/COLOR" : (0x06,),
-        "/EFFECT" : (0x0e, 0x0f)
+        "/COLOR" : b"\x06",
+        "/EFFECT" : b"\x0e\x0f"
     }
 
     state = 0
@@ -84,7 +84,7 @@ def parse(source_str):
     value = 0
     command_stack = []
     pointer_tbl = []
-    char_tbl = []
+    text_bytes = b""
 
     # States
     #
@@ -112,22 +112,22 @@ def parse(source_str):
                 variable = ""
                 value = ""
             elif i == "#": # pause
-                char_tbl.append(0x0b)
+                text_bytes += b"\x0b"
                 state = state & 0xf0 | 3
                 offset += 1
             elif i == "|": # continue to next
-                char_tbl.append(0x02)
+                text_bytes += b"\x02"
                 state = state & 0xf0 | 3
                 offset += 1
             elif i == "\\": # end
-                char_tbl.append(0x00)
+                text_bytes += b"\x00"
                 state = state & 0xf0 | 3
                 offset += 1
             else:
                 if i in conv_table.keys():
-                    char_tbl.append(conv_table[i])
+                    text_bytes += conv_table[i]
                 else:
-                    char_tbl.append(ord(i))
+                    text_bytes += str.encode(i)
                 offset += 1
         elif state & 0x0f == 1:
             if i == "=":
@@ -141,81 +141,91 @@ def parse(source_str):
                 else:
                     command_tokens = command.split()
                     if command_tokens[0] == "POS":
-                        box_byte = 0
+                        box_byte = b""
                         try:
-                            if command_tokens[1] in box_pos_table.keys():
-                                box_byte += box_pos_table[command_tokens[1]]
-                        except IndexError:
+                            box_byte += box_pos_table[command_tokens[1]]
+                        except (KeyError, IndexError):
                             state = state & 0xf0 | 3
                             continue
                         try:
-                            if command_tokens[2] in box_size_table.keys():
-                                box_byte += box_size_table[command_tokens[2]]
-                        except IndexError:
-                            pass
-                        char_tbl.append(0x0c)
-                        char_tbl.append(box_byte)
-                        offset += 2
+                            box_byte += box_size_table[command_tokens[2]]
+                        except (KeyError, IndexError):
+                            state = state & 0xf0 | 3
+                            continue
+                        text_bytes += b"\x0c"
+                        text_bytes += box_byte
                         state = state & 0xf0 | 3
+                        offset += 2
                     elif command_tokens[0] == "TIME":
-                        time_byte = 0
+                        time_byte = b""
                         try:
-                            time_byte = int(command_tokens[1], base=16)
-                        except ValueError:
-                            pass
-                        char_tbl.append(0x16)
-                        char_tbl.append(time_byte)
+                            time_byte = int.to_bytes(int(command_tokens[1], base=16), length=1, byteorder="little")
+                        except (TypeError, IndexError):
+                            state = state & 0xf0 | 3
+                            continue
+                        text_bytes += b"\x16"
+                        text_bytes += time_byte
+                        state = state & 0xf0 | 3
+                        offset += 2
                     elif command_tokens[0] == "COLOR":
-                        color_byte = 0
+                        color_byte = b""
                         try:
                             color_byte += color_table[command_tokens[1]]
-                        except IndexError:
+                        except (KeyError, IndexError):
                             state = state & 0xf0 | 3
                             continue
-                        char_tbl.append(0x05)
-                        char_tbl.append(color_byte)
-                        offset += 2
-                        state = 0x13
+                        text_bytes += b"\x05"
+                        text_bytes += color_byte
                         command_stack.append("/COLOR")
+                        state = 0x13
+                        offset += 2
                     elif command_tokens[0] == "/COLOR" and state & 0xf0 == 0x10:
                         if command_tokens[0] == command_stack[-1]:
-                            char_tbl.extend(close_table[command_stack[-1]])
+                            text_bytes += close_table[command_stack[-1]]
                             offset += len(close_table[command_stack.pop()])
                         if len(command_stack) == 0:
                             state = 0x03
                             continue
                         state = state & 0xf0 | 3
                     elif command_tokens[0] == "EFFECT":
-                        char_tbl.append(0x0d)
-                        offset += 1
-                        state = 0x13
+                        text_bytes += b"\x0d"
                         command_stack.append("/EFFECT")
+                        state = 0x13
+                        offset += 1
                     elif command_tokens[0] == "/EFFECT" and state & 0xf0 == 0x10:
                         if command_tokens[0] == command_stack[-1]:
                             try:
-                                char_tbl.extend((0x0e, 0x0f))
-                                char_tbl.append(effects_table.index(command_tokens[1]))
-                                offset += 3
-                                command_stack.pop()
+                                text_bytes += close_table[command_stack[-1]]
+                                text_bytes += int.to_bytes(effects_table.index(command_tokens[1]), length=1, byteorder="little")
+                                offset += len(close_table[command_stack.pop()])
                             except IndexError:
                                 state = state & 0xf0 | 3
                                 continue
                         if len(command_stack) == 0:
                             state = 0x03
                             continue
+                        state = state & 0xf0 | 3
                     elif command_tokens[0] == "PARTY":
-                        party_byte = 0
-                        char_tbl.append(0x04)
+                        party_byte = b""
                         try:
-                            if command_tokens[1] in party_tbl.keys():
-                                party_byte += box_pos_table[command_tokens[1]]
-                        except IndexError:
+                            party_byte += party_tbl[command_tokens[1]]
+                        except (KeyError, IndexError):
                             state = state & 0xf0 | 3
                             continue
-                        char_tbl.append(0x04)
-                        char.tbl.append(party_byte)
-                        offset += 2
+                        text_bytes += b"\x04"
+                        text_bytes += party_byte
                         state = state & 0xf0 | 3
+                        offset += 2
+                    elif command_tokens[0] == "SYMBOL":
+                        symbol_byte = b""
+                        try:
+                            symbol_byte = int.to_bytes(int(command_tokens[1], base=16), length=1, byteorder="little")
+                        except (TypeError, IndexError):
+                            state = state & 0xf0 | 3
+                            continue
+                        text_bytes += time_byte
+                        state = state & 0xf0 | 3
+                        offset += 1
             else:
                 command = "".join((command, i))
         elif state & 0x0f == 4:
@@ -243,46 +253,35 @@ def parse(source_str):
         elif state & 0x0f == 3:
             if i == "\n":
                 state = state & 0xf0 | 0
-            elif i == " ":
-                continue
             elif i == "=":
                 state = state & 0xf0 | 1
             elif i == "[":
                 state = state & 0xf0 | 2
                 command = ""
             elif i == "|":
-                char_tbl.append(0x02)
+                text_bytes += b"\x02"
                 offset += 1
             elif i == "\\":
-                char_tbl.append(0x00)
+                text_bytes += b"\x00"
                 offset += 1
             else:
                 if i in conv_table.keys():
-                    char_tbl.append(conv_table[i])
+                    text_bytes += conv_table[i]
                 else:
-                    char_tbl.append(ord(i))
+                    text_bytes += str.encode(i)
                 offset += 1
-            state = state & 0xf0 | 0
+                state = state & 0xf0 | 0
 
     variables["OFFSET"] = offset
-    return (pointer_tbl, char_tbl, variables)
+    return (pointer_tbl, text_bytes, variables)
     
-def process_tbl(parsed):
-    ptsize = parsed[2]["PTSIZE"]
-    offset = parsed[2]["OFFSET"]
-    offset_little = tools.to_little(offset + ptsize, 2)
-    tbl = []
-    if ptsize & 1 != 0:
-        raise ValueError
-    tbl.extend(tools.to_little(ptsize, 2))
-    j = 0
-    for i in parsed[0]:
-        j += 1
-        tbl.extend(tools.to_little(i + ptsize, 2))
-
-    for i in range((ptsize - j*2 - 2)//2):
-        tbl.append(offset_little)
-
-    tbl.extend(parsed[1])
-    padding = offset // 2048
-    return tbl
+def process_output(tbl):
+    ptsize = tbl[2]["PTSIZE"]
+    offset = tbl[2]["OFFSET"]
+    output = int.to_bytes(ptsize, length=2, byteorder="little")
+    for ptr in tbl[0]:
+        output += int.to_bytes(ptr + ptsize, length=2, byteorder="little")
+    output += int.to_bytes(offset + ptsize, length=2, byteorder="little") * (ptsize // 2 - len(tbl[0]) - 1)
+    output += tbl[1]
+    output += b"_" * (-(len(output) % -2048))
+    return output

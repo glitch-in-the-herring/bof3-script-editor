@@ -113,7 +113,7 @@ int main(int argc, char *argv[])
             }
             else if (dialogue_section[j] == 0x02)
             {
-                fprintf(output_file, "\n|\n");
+                fprintf(output_file, "|\n");
             }
             else if (dialogue_section[j] == 0x0f && dialogue_section[j - 1] == 0x0e)
             {

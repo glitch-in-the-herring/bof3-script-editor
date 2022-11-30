@@ -1,4 +1,4 @@
-# Writing for the Script Editor
+# Script Editor Syntax
 
 ## Alphanumeric
 Use ASCII alphanumeric characters. No conversion takes place.
@@ -6,15 +6,18 @@ Use ASCII alphanumeric characters. No conversion takes place.
 ## Punctuations
 Use ASCII punctuations. These are converted to the encoding format the game uses.
 
-## Whitespace and Newline
+## Whitespaces and Newlines
+Use the ASCII whitespace (`0x20`). Use UNIX line endings.
 
-## Textbox Position
-Use
+## Pointer marker
+To add an offset to the table pointer, use `==`. To mark the end of a string, use `\`.
+
+## Commands
+### Textbox Position
 ```
 [POS <box_pos> <box_style>]
 ```
-to indicate the style and position of a textbox.  
-`<box_pos>` and `box_style` are two-character codes, The available options are:
+This command 
 
 | Vertical `box_pos` | Position |
 | ------------------ | -------- |
@@ -35,3 +38,7 @@ Example: `BM` means bottom (vertically)-mid (horizontally).
 | `NV`          | Normal size, visible background   |
 | `NI`          | Normal size, invisible background |
 | `SV`          | Small size, visible background    |
+
+### Text Color
+
+### Placeholders

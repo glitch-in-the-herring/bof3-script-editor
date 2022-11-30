@@ -1,17 +1,16 @@
-from parse import parse, process_tbl
+from parse import parse, process_output
 
-a = """==This should appear as bytes
-this too...\\
-==what about this one?\\
+a = """Area Name or Something\\==[COLOR RED]
+This is some red text[/COLOR]\\
+==[TIME 10]
+That just got delayed\\
+==[PARTY RYU]
+
+[PARTY RYU] talk??\\
 """
 x = parse(a)
-n = 0
+x_p = process_output(x)
 
-print("\nPointer tbl")
-a = process_tbl(x)
-n = 0
-for i in a:
-    print("{:02x}".format(i), end="")
-    if n % 8 == 7:
-        print("")
-    n += 1
+f = open("test.bin", "wb")
+f.write(x_p)
+f.close()
