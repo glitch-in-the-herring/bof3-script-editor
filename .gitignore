@@ -147,6 +147,7 @@ cython_debug/
 *.EMI
 *.txt
 *.bin
+*.exe
 !hiragana.txt
 !katakana.txt
 !kanji.txt
