@@ -25,13 +25,13 @@ def parse(source_str):
     }
 
     box_pos_table = {
-        "BM" : b"\x00",
-        "MM" : b"\x01",
-        "TM" : b"\x02",
-        "TL" : b"\x03",
-        "TR" : b"\x04",
-        "BL" : b"\x05",
-        "BR" : b"\x06"
+        "BM" : 0x00,
+        "MM" : 0x01,
+        "TM" : 0x02,
+        "TL" : 0x03,
+        "TR" : 0x04,
+        "BL" : 0x05,
+        "BR" : 0x06
     }
 
     box_size_table = {
@@ -72,6 +72,11 @@ def parse(source_str):
         "JMP0", "JMP1", "JMP2" 
     ]
 
+    opt_table = {
+        "ABOVE" : 0x00,
+        "NEW" : 0x10
+    }
+
     close_table = {
         "/COLOR" : b"\x06",
         "/EFFECT" : b"\x0e\x0f"
@@ -82,6 +87,7 @@ def parse(source_str):
     command = ""
     variable = ""
     value = 0
+    opt_count = 0
     command_stack = []
     pointer_tbl = []
     text_bytes = b""
@@ -141,7 +147,7 @@ def parse(source_str):
                 else:
                     command_tokens = command.split()
                     if command_tokens[0] == "POS":
-                        box_byte = b""
+                        box_byte_int = 0
                         try:
                             box_byte += box_pos_table[command_tokens[1]]
                         except (KeyError, IndexError):
@@ -152,6 +158,7 @@ def parse(source_str):
                         except (KeyError, IndexError):
                             state = state & 0xf0 | 3
                             continue
+                        box_byte = int.to_bytes(box_byte_int, length=1, byteorder="little")
                         text_bytes += b"\x0c"
                         text_bytes += box_byte
                         state = state & 0xf0 | 3
@@ -226,6 +233,26 @@ def parse(source_str):
                         text_bytes += time_byte
                         state = state & 0xf0 | 3
                         offset += 1
+                    elif command_tokens[0] == "OPTIONS":
+                        layout_byte_int = 0
+                        try:
+                            layout_byte_int += opt_table[command_tokens[1]]
+                        except (KeyError, IndexError):
+                            state = state & 0xf0 | 3
+                            continue
+                        try:
+                            layout_byte_int += int(command_tokens[2]) & 0x0f
+                        except ValueError:
+                            state = state & 0xf0 | 3
+                            continue
+                        layout_byte = int.to_bytes(layout_byte_int, length=1, byteorder="little")
+                        text_bytes += b"\x14"
+                        text_bytes += int.to_bytes(opt_count, length=1, byteorder="litte")
+                        text_bytes += b"\x0c"
+                        text_bytes += layout_byte
+                        opt_count += 1
+                        state = state & 0xf0 | 3
+                        offset += 4
             else:
                 command = "".join((command, i))
         elif state & 0x0f == 4:

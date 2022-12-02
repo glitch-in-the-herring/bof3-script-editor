@@ -153,12 +153,12 @@ int main(int argc, char *argv[])
             else if (dialogue_section[j] == 0x05)
             {
                 strcpy(last_color, is_color(dialogue_section[j + 1]));
-                fprintf(output_file, "[%s]", last_color);
+                fprintf(output_file, "[COLOR %s]", last_color);
                 j++;            
             }
             else if (dialogue_section[j] == 0x06)
             {
-                fprintf(output_file, "[/%s]", last_color);
+                fprintf(output_file, "[/COLOR]");
             }
             else if (dialogue_section[j] == 0x14)
             {
