@@ -35,9 +35,9 @@ def parse(source_str):
     }
 
     box_size_table = {
-        "NV" : b"\x00",
-        "SV" : b"\x40",
-        "NI" : b"\x80"
+        "NV" : 0x00,
+        "SV" : 0x40,
+        "NI" : 0x80
     }
 
     color_table = {
@@ -149,12 +149,12 @@ def parse(source_str):
                     if command_tokens[0] == "POS":
                         box_byte_int = 0
                         try:
-                            box_byte += box_pos_table[command_tokens[1]]
+                            box_byte_int += box_pos_table[command_tokens[1]]
                         except (KeyError, IndexError):
                             state = state & 0xf0 | 3
                             continue
                         try:
-                            box_byte += box_size_table[command_tokens[2]]
+                            box_byte_int += box_size_table[command_tokens[2]]
                         except (KeyError, IndexError):
                             state = state & 0xf0 | 3
                             continue
