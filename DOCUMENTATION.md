@@ -42,3 +42,6 @@ Example: `BM` means bottom (vertically)-mid (horizontally).
 ### Text Color
 
 ### Placeholders
+`[PARTY ...]`
+Add the placeholder for party member names
+

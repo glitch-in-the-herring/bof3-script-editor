@@ -163,17 +163,6 @@ def parse(source_str):
                         text_bytes += box_byte
                         state = state & 0xf0 | 3
                         offset += 2
-                    elif command_tokens[0] == "TIME":
-                        time_byte = b""
-                        try:
-                            time_byte = int.to_bytes(int(command_tokens[1], base=16), length=1, byteorder="little")
-                        except (TypeError, IndexError):
-                            state = state & 0xf0 | 3
-                            continue
-                        text_bytes += b"\x16"
-                        text_bytes += time_byte
-                        state = state & 0xf0 | 3
-                        offset += 2
                     elif command_tokens[0] == "COLOR":
                         color_byte = b""
                         try:
@@ -212,6 +201,47 @@ def parse(source_str):
                             state = 0x03
                             continue
                         state = state & 0xf0 | 3
+                    elif command_tokens[0] == "OPTIONS":
+                        layout_byte_int = 0
+                        try:
+                            layout_byte_int += opt_table[command_tokens[1]]
+                        except (KeyError, IndexError):
+                            state = state & 0xf0 | 3
+                            continue
+                        try:
+                            layout_byte_int += int(command_tokens[2]) & 0x0f
+                        except ValueError:
+                            state = state & 0xf0 | 3
+                            continue
+                        layout_byte = int.to_bytes(layout_byte_int, length=1, byteorder="little")
+                        text_bytes += b"\x14"
+                        text_bytes += int.to_bytes(opt_count, length=1, byteorder="litte")
+                        text_bytes += b"\x0c"
+                        text_bytes += layout_byte
+                        command_stack.append("/OPTIONS")
+                        opt_count += 1
+                        state = 0x13
+                        offset += 4
+                    elif command_tokens[0] == "/OPTIONS":
+                        if command_tokens == command_stack[-1]:
+                            text_bytes += b"\x00"
+                            command_stack.pop()
+                            offset += 1
+                        if len(command_stack) = 0:
+                            state = 0x03
+                            continue
+                        state = state & 0xf0 | 3
+                    elif command_tokens[0] == "TIME":
+                        time_byte = b""
+                        try:
+                            time_byte = int.to_bytes(int(command_tokens[1], base=16), length=1, byteorder="little")
+                        except (TypeError, IndexError):
+                            state = state & 0xf0 | 3
+                            continue
+                        text_bytes += b"\x16"
+                        text_bytes += time_byte
+                        state = state & 0xf0 | 3
+                        offset += 2
                     elif command_tokens[0] == "PARTY":
                         party_byte = b""
                         try:
@@ -230,29 +260,20 @@ def parse(source_str):
                         except (TypeError, IndexError):
                             state = state & 0xf0 | 3
                             continue
-                        text_bytes += time_byte
+                        text_bytes += symbol_byte
                         state = state & 0xf0 | 3
                         offset += 1
-                    elif command_tokens[0] == "OPTIONS":
-                        layout_byte_int = 0
+                    elif command_tokens[0] == "PLACEHOLDER"
+                        placeholder_byte = b""
                         try:
-                            layout_byte_int += opt_table[command_tokens[1]]
-                        except (KeyError, IndexError):
+                            placeholder_byte = int.to_bytes(int(command_tokens[1], base=16), length=1, byteorder="little")
+                        except (TypeError, IndexError):
                             state = state & 0xf0 | 3
                             continue
-                        try:
-                            layout_byte_int += int(command_tokens[2]) & 0x0f
-                        except ValueError:
-                            state = state & 0xf0 | 3
-                            continue
-                        layout_byte = int.to_bytes(layout_byte_int, length=1, byteorder="little")
-                        text_bytes += b"\x14"
-                        text_bytes += int.to_bytes(opt_count, length=1, byteorder="litte")
-                        text_bytes += b"\x0c"
-                        text_bytes += layout_byte
-                        opt_count += 1
+                        text_bytes += b"\x07"
+                        text_bytes += placeholder_byte
                         state = state & 0xf0 | 3
-                        offset += 4
+                        offset += 2
             else:
                 command = "".join((command, i))
         elif state & 0x0f == 4:

@@ -118,7 +118,7 @@ int main(int argc, char *argv[])
             else if (dialogue_section[j] == 0x0f && dialogue_section[j - 1] == 0x0e)
             {
                 fprintf(output_file, "[/EFFECT %s]", is_effect(dialogue_section[j + 1]));
-                j += 2;    
+                j += 2;
             }
             else if (dialogue_section[j] == 0x04)
             {
@@ -185,7 +185,6 @@ int main(int argc, char *argv[])
                 fprintf(output_file, "\\\n");
                 opt_counter--;
             }
-
             if (in_opt == 1 && opt_counter == 0)
             {
                 fprintf(output_file, "[/OPTION]");
