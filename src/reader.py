@@ -7,7 +7,10 @@ argparser.add_argument(
     "source", metavar="SOURCE", type=str, help="Source file for the converter"
 )
 argparser.add_argument(
-    "-o", "--output", metavar="TARGET", type=str, help="File to write"
+    "-o", "--output", metavar="OUTPUT", type=str, help="File to write" # no EMI
+)
+argparser.add_argument(
+    "-p", "--patch", metavar="PATCH", type=str, help="File to write" # with EMI
 )
 argparser.add_argument(
     "-v", "--verbose", action="store_true", default=False

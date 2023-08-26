@@ -68,6 +68,7 @@ int main(int argc, char *argv[])
     char box_position[20];
     int j;
     int opt_counter = 0;
+    int opt_position;
     int in_opt = 0;
 
     for (int i = 0; i < pointer_size; i++)
@@ -162,8 +163,17 @@ int main(int argc, char *argv[])
             }
             else if (dialogue_section[j] == 0x14)
             {
-                fprintf(output_file, "\n[OPTIONS]\n");
+                fprintf(output_file, "[OPTIONS ");
                 opt_counter = dialogue_section[j + 3] & 0xf;
+                opt_position = dialogue_section[j + 3] & 0xf0;
+                if (opt_position)
+                {
+                    fprintf(output_file, "NEW]\n");
+                }
+                else
+                {
+                    fprintf(output_file, "ABOVE]\n");
+                }
                 in_opt = 1;
                 j += 3;
             }
@@ -185,9 +195,9 @@ int main(int argc, char *argv[])
                 fprintf(output_file, "\\\n");
                 opt_counter--;
             }
-            if (in_opt == 1 && opt_counter == 0)
+            else if (in_opt == 1 && opt_counter == 0)
             {
-                fprintf(output_file, "[/OPTION]");
+                fprintf(output_file, "[/OPTIONS]");
                 in_opt = 0;
                 break;
             }

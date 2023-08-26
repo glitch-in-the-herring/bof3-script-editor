@@ -208,14 +208,10 @@ def parse(source_str):
                         except (KeyError, IndexError):
                             state = state & 0xf0 | 3
                             continue
-                        try:
-                            layout_byte_int += int(command_tokens[2]) & 0x0f
-                        except ValueError:
-                            state = state & 0xf0 | 3
-                            continue
+
                         layout_byte = int.to_bytes(layout_byte_int, length=1, byteorder="little")
                         text_bytes += b"\x14"
-                        text_bytes += int.to_bytes(opt_count, length=1, byteorder="litte")
+                        text_bytes += int.to_bytes(opt_count, length=1, byteorder="little")
                         text_bytes += b"\x0c"
                         text_bytes += layout_byte
                         command_stack.append("/OPTIONS")
@@ -227,7 +223,7 @@ def parse(source_str):
                             text_bytes += b"\x00"
                             command_stack.pop()
                             offset += 1
-                        if len(command_stack) = 0:
+                        if len(command_stack) == 0:
                             state = 0x03
                             continue
                         state = state & 0xf0 | 3
@@ -251,7 +247,7 @@ def parse(source_str):
                             continue
                         text_bytes += b"\x04"
                         text_bytes += party_byte
-                        state = state & 0xf0 | 3
+                        state = state & 0xf0 | 0
                         offset += 2
                     elif command_tokens[0] == "SYMBOL":
                         symbol_byte = b""
@@ -263,7 +259,7 @@ def parse(source_str):
                         text_bytes += symbol_byte
                         state = state & 0xf0 | 3
                         offset += 1
-                    elif command_tokens[0] == "PLACEHOLDER"
+                    elif command_tokens[0] == "PLACEHOLDER":
                         placeholder_byte = b""
                         try:
                             placeholder_byte = int.to_bytes(int(command_tokens[1], base=16), length=1, byteorder="little")

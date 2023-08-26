@@ -123,13 +123,13 @@ char *is_position(byte a)
     switch (style)
     {
         case 0x00:
-            strcat(buffer, " NV] ");
+            strcat(buffer, " NV]");
             break;
         case 0x04:
-            strcat(buffer, " SV] ");
+            strcat(buffer, " SV]");
             break;
         case 0x08:
-            strcat(buffer, " NI] ");
+            strcat(buffer, " NI]");
             break;
     }
 

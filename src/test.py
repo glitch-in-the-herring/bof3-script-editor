@@ -1,12 +1,11 @@
 from parse import parse, process_output
 
-a = """[POS BL NV]
-[PARTY TEEPO] talk??\\
-"""
-x = parse(a)
+with open("../out.txt", "r") as f:
+    a = f.read()
+    x = parse(a)
+    with open("../binout.txt", "wb") as o:
+        o.write(x[1])
 #x_p = process_output(x)
-
-print(x)
 
 #f = open("test.bin", "wb")
 #f.write(x_p)
